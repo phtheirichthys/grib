@@ -209,66 +209,55 @@ func ParseData3(dataReader io.Reader, dataLength int, template *Data3) []float64
 		}
 	}
 
-	/*
-	   if ( references != 0 ) free(references)
-	   if ( widths != 0 ) free(widths)
-	   if ( lengths != 0 ) free(lengths)
-	*/
-	//
-	//  If using spatial differences, add overall min value, and
-	//  sum up recursively
-	//
-	//printf("SAGod: %ld %ld\n",idrsnum,idrstmpl[16])
-
 	itemp := non
 	ndpts := numberOfGroups
+	adjustedSection7 := make([]int64, len(section7Data))
 
 	if template.SpatialOrderDifference == 1 {
 		// first order
-		section7Data[0] = int64(ival1)
+		adjustedSection7[0] = int64(ival1)
 
 		if template.MissingValue == 0 {
 			itemp = ndpts // no missing values
 		}
 
 		for n := 1; n < itemp; n++ {
-			section7Data[n] = section7Data[n] + int64(minsd)
-			section7Data[n] = section7Data[n] + section7Data[n-1]
+			adjustedSection7[n] = section7Data[n] + int64(minsd)
+			adjustedSection7[n] = section7Data[n] + section7Data[n-1]
 		}
 	} else if template.SpatialOrderDifference == 2 {
 		// second order
 
-		section7Data[0] = int64(ival1)
-		section7Data[1] = int64(ival2)
+		adjustedSection7[0] = int64(ival1)
+		adjustedSection7[1] = int64(ival2)
 		if template.MissingValue == 0 {
 			itemp = ndpts
 		}
-
 		for n := 2; n < itemp; n++ {
-			//section7Data[n] = section7Data[n] + int64(minsd)
+			adjustedSection7[n] = section7Data[n] + int64(minsd)
 			// WTF does this line do??? it seems to fuck up everything
-			//section7Data[n] = section7Data[n] + (2 * section7Data[n-1]) - section7Data[n-2]
+			adjustedSection7[n] = section7Data[n] + (2 * section7Data[n-1]) - section7Data[n-2]
 		}
 	}
 
 	fld := make([]float64, len(section7Data))
-	bscale := math.Pow(2.0, float64(template.BinaryScale))
-	dscale := math.Pow(10.0, float64(template.DecimalScale))
+	binaryScale := math.Pow(2.0, float64(template.BinaryScale))
+	decimalScale := math.Pow(10.0, float64(template.DecimalScale))
 
 	if template.MissingValue == 0 {
 		// no missing values
-		for i, dataValue := range section7Data {
-			fld[i] = ((float64(dataValue) * float64(bscale)) + float64(template.Reference)) / dscale
+		for i, dataValue := range adjustedSection7 {
+			fld[i] = ((float64(dataValue) * float64(binaryScale)) + float64(template.Reference)) / decimalScale
 		}
 	} else if template.MissingValue == 1 || template.MissingValue == 2 {
 		// missing values included
 		non := 0
-		for n, dataValue := range section7Data {
+		for n, dataValue := range adjustedSection7 {
 			if ifldmiss[n] == 0 {
 				non++
-				fld[n] = ((float64(dataValue) * float64(bscale)) + float64(template.Reference)) / dscale
+				fld[n] = ((float64(dataValue) * float64(binaryScale)) + float64(template.Reference)) / decimalScale
 
-				//printf(" SAG %d %f %d %f %f %f\n",n,fld[n],section7Data[non-1],bscale,ref,dscale)
+				//printf(" SAG %d %f %d %f %f %f\n",n,fld[n],section7Data[non-1],binaryScale,ref,decimalScale)
 			} else if ifldmiss[n] == 1 {
 				fld[n] = missingValueSubstitute1
 			} else if ifldmiss[n] == 2 {
