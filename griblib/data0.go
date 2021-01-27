@@ -24,8 +24,8 @@ const INT_MAX = 9223372036854775807
 //    |              |    - 255 : missing
 type Data0 struct {
 	Reference    float32 `json:"reference"`
-	BinaryScale  uint16  `json:"binaryScale"`
-	DecimalScale uint16  `json:"decimalScale"`
+	BinaryScale  int16   `json:"binaryScale"`
+	DecimalScale int16   `json:"decimalScale"`
 	Bits         uint8   `json:"bits"`
 	Type         uint8   `json:"type"`
 }

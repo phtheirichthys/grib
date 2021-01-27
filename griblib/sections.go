@@ -467,6 +467,12 @@ func (section Section5) GetDataTemplate() (interface{}, error) {
 	case 0:
 		data := Data0{}
 		read(bytes.NewReader(section.Data), &data)
+		if section.Data[4]&0x80 == 0x80 {
+			data.BinaryScale = -int16(uint16(section.Data[4]&^0x80)<<8 | uint16(section.Data[5]))
+		}
+		if section.Data[6]&0x80 == 0x80 {
+			data.DecimalScale = -int16(uint16(section.Data[6]&^0x80)<<8 | uint16(section.Data[7]))
+		}
 		return data, nil
 	case 2:
 		data := Data2{}
